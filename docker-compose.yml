@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+  booking-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: evcp/booking-service:1.0.0
+    container_name: evcp-booking-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: evcp_booking
+      PGUSER: evcp_user
+      PGPASSWORD: changeme
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      BOOKING_HOLD_MINUTES: 15
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - evcp-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: evcp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: evcp_booking
+      POSTGRES_USER: evcp_user
+      POSTGRES_PASSWORD: changeme
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evcp_user -d evcp_booking"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - evcp-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: evcp-redis
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - evcp-network
+
+networks:
+  evcp-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
