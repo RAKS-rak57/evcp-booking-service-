@@ -13,6 +13,25 @@ app.use((req, res, next) => {
   next();
 });
 
+// Basic in-memory rate limiting (100 requests / 15 min per IP)
+const rateLimitWindowMs = 15 * 60 * 1000;
+const rateLimitMax = 100;
+const requestCounts = new Map();
+app.use((req, res, next) => {
+  const now = Date.now();
+  const entry = requestCounts.get(req.ip) || { count: 0, start: now };
+  if (now - entry.start > rateLimitWindowMs) {
+    entry.count = 0;
+    entry.start = now;
+  }
+  entry.count += 1;
+  requestCounts.set(req.ip, entry);
+  if (entry.count > rateLimitMax) {
+    return res.status(429).json({ error: true, message: 'Too many requests' });
+  }
+  next();
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'evcp-booking-service', timestamp: new Date().toISOString() });
 });
