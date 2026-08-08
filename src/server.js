@@ -7,6 +7,12 @@ const bookingsRoutes = require('./routes/bookings.routes');
 const app = express();
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'evcp-booking-service', timestamp: new Date().toISOString() });
 });
