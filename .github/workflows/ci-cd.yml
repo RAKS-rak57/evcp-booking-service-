@@ -12,7 +12,7 @@ permissions:
   packages: write   # required to push images to GitHub Container Registry (ghcr.io)
 
 env:
-  IMAGE_NAME: ghcr.io/${{ lower(github.repository_owner) }}/evcp-booking-service
+    IMAGE_NAME: ghcr.io/raks-rak57/evcp-booking-service
 jobs:
   # ───────────────────────── STAGE 1: BUILD & UNIT TEST ─────────────────────────
   build-and-test:
